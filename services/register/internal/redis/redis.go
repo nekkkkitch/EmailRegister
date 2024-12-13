@@ -15,13 +15,11 @@ type Config struct {
 	Port     string `yaml:"port" env-prefix:"PORT"`
 	Password string `yaml:"password" env-prefix:"PASSWORD"`
 	DB       int    `yaml:"dbnum" env-prefix:"DB"`
-	TTL      int    `yaml:"ttl"`
 }
 
 type Redis struct {
 	cfg    *Config
 	client *redis.Client
-	ttl    time.Duration
 }
 
 func New(cfg *Config) (*Redis, error) {
@@ -30,7 +28,7 @@ func New(cfg *Config) (*Redis, error) {
 		Password: cfg.Password,
 		DB:       cfg.DB,
 	})
-	ret := Redis{client: rdb, cfg: cfg, ttl: time.Duration(cfg.TTL) * time.Second}
+	ret := Redis{client: rdb, cfg: cfg}
 	return &ret, nil
 }
 
@@ -48,7 +46,7 @@ func (r *Redis) GetCode(email string) (string, error) {
 }
 
 func (r *Redis) PutCode(email, code string) error {
-	err := r.client.Set(context.Background(), "code_email:"+email, code, r.ttl)
+	err := r.client.Set(context.Background(), "code_email:"+email, code, time.Minute*3)
 	if err.Err() != nil {
 		slog.Error(fmt.Sprintf("redis PutCode error: %v", err))
 		return err.Err()

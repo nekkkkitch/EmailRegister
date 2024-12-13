@@ -71,6 +71,10 @@ func (r *Router) VerifyEmail() fiber.Handler {
 		}
 		err = r.service.VerifyEmail(data["email"], data["code"])
 		if err != nil {
+			if err.Error() == "codes not equal" {
+				c.Status(fiber.StatusBadRequest)
+				return err
+			}
 			log.Println("Failed to verify user:", err)
 			c.Status(500)
 			return nil
